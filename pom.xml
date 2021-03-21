@@ -54,7 +54,7 @@
           <configuration>
             <archive> 
               <manifest>
-                <mainClass> UMLUtils.App </mainClass>
+                <mainClass> UMLUtils.AppUi </mainClass>
               </manifest>
             </archive> 
           </configuration>
