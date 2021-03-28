@@ -10,86 +10,103 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 
 class ToolsButton extends JButton implements ActionListener {
-    private int status;
-    private ToolsPanel panel;
-    public ToolsButton (int status, ToolsPanel ref) {
-        this.status = status;
-        this.panel = ref;
+    private ToolsPanel.Modes mode;
+    private ToolsPanel toolsPanel;
+    public ToolsButton (ToolsPanel.Modes mode, ToolsPanel ref) {
+        this.mode = mode;
+        this.toolsPanel = ref;
+        setIcon(new ImageIcon(mode.getPath()));
+        setBorder(BorderFactory.createEmptyBorder());
         addActionListener(this);
-    }
-    public int getStatus() {
-        return status;
     }
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        panel.setStatus( getStatus() );
+        toolsPanel.setMode( mode );
     }
 }
 
+/**
+ * tools panel predefine with enum class
+ * bind image path with button 
+ * bind button changeMode to some MouseActionHandler
+ */
 class ToolsPanel extends JPanel {
-    public enum Tools{
-        SELECT("src/images/select.png", new DrawSelectAction(), 0),
-        ASSOC("src/images/association.png", new DrawAssocLineAction(), 1),
-        GENER("src/images/generalization.png", new DrawGenerLineAction(), 2),
-        COMPOS("src/images/composition.png", new DrawComposLineAction(), 3),
-        CLASS("src/images/class.png", new DrawClassAction(), 4),
-        UCASE("src/images/use case.png", new DrawUcaseAction(), 5);
+    public enum Modes{
+        SELECT("src/images/newSelect.png", "src/images/newSelectCHS.png", new DrawSelectAction(), 0),
+        ASSOC("src/images/newAssoc.png", "src/images/newAssocCHS.png", new DrawAssocLineAction(), 1),
+        GENER("src/images/newGener.png", "src/images/newGenerCHS.png", new DrawGenerLineAction(), 2),
+        COMPOS("src/images/newCompos.png", "src/images/newComposCHS.png", new DrawComposLineAction(), 3),
+        CLASS("src/images/newClass.png", "src/images/newClassCHS.png", new DrawClassAction(), 4),
+        UCASE("src/images/newUcase.png", "src/images/newUcaseCHS.png", new DrawUcaseAction(), 5);
 
-        Tools(String path, MouseHandle handler, int index) {
+        Modes(String path, String chsPath, MouseActionHandler handler, int index) {
             this.path = path;
+            this.chsPath = chsPath;
             this.handle = handler;
             this.index = index;
         }
         private final String path;
-        private final MouseHandle handle;
+        private final String chsPath;
+        private final MouseActionHandler handle;
         private final int index;
 
         public String getPath() {
             return this.path;
         }
 
+        public String getChsPath() {
+            return this.chsPath;
+        }
+
         public int getIndex() {
             return this.index;
         }
 
-        public MouseHandle getHandler() {
+        public MouseActionHandler getHandler() {
             return this.handle;
         }
     }
 
-    private int status;
-    private DrawPanel panel;
+    //private int status;
+    private Modes mode;
+    private DrawPanel drawPanel;
     private ArrayList<JButton> buttons = new ArrayList<JButton>(); 
 
-    public void setStatus(int status) {
-        this.status = status;
-        for (Tools tools : Tools.values()) {
-            if (tools.getIndex() == status) {
-                panel.changeMode(tools.getHandler());
+    public void setMode(Modes newMode) {
+        if (newMode == mode) {
+            return;
+        }
+
+        JButton button;
+        for (Modes modes : Modes.values()) {
+            if (modes == mode) {
+                button = buttons.get(modes.getIndex());
+                button.setIcon(new ImageIcon(modes.getPath()));
+            }
+            if (modes == newMode) {
+                button = buttons.get(modes.getIndex());
+                button.setIcon(new ImageIcon(modes.getChsPath()));
+                drawPanel.changeMode(modes.getHandler());
             }
         }
+        mode = newMode;
     }
 
-    public int getStatus() {
-        return status;
-    }
-
-    ToolsPanel(DrawPanel panel) {
-        this.panel = panel;
-        this.status = Tools.CLASS.getIndex();
+    /**
+     * initialize tools panel and bind relation
+     * we set class button action as default
+     * @param drawPanel
+     */
+    ToolsPanel(DrawPanel drawPanel) {
+        this.drawPanel = drawPanel;
+        this.mode = Modes.CLASS;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        for (Tools tools: Tools.values()) {
-            System.out.println(tools.getIndex());
-            System.out.println(tools.getPath());
-
-            ToolsButton tmp = new ToolsButton(tools.getIndex(), this);
-            tmp.setIcon(new ImageIcon(tools.getPath()));
-            tmp.addActionListener(tmp);
-            tmp.setBorder(BorderFactory.createEmptyBorder());
-            buttons.add(tools.getIndex(), tmp);
-            add(tmp);
+        for (Modes modes: Modes.values()) {
+            ToolsButton toolsButton = new ToolsButton(modes, this);
+            buttons.add(modes.getIndex(), toolsButton);
+            add(toolsButton);
         }
-        panel.changeMode(Tools.CLASS.getHandler());
+        setMode(Modes.SELECT);
     }
 }

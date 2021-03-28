@@ -1,4 +1,5 @@
 package UMLUtils;
+import java.sql.Driver;
 
 import java.awt.event.*;
 
@@ -10,35 +11,39 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+/**
+ * pass drawPanel to menuItem
+ * the actionPerform will directly take effect on draw panel
+ */
 class GroupActionItem extends JMenuItem implements ActionListener {
-    private DrawPanel panel;
+    private DrawPanel drawPanel;
 
-    GroupActionItem(DrawPanel panel) {
+    GroupActionItem(DrawPanel drawPanel) {
         super("group");
-        this.panel = panel;
+        this.drawPanel = drawPanel;
         addActionListener(this);
     }
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        System.out.println("group");
-        panel.group(new CompositeItem());
+        //System.out.println("group");
+        drawPanel.group(new CompositeItem());
     }
 }
 
 class UngroupActionItem extends JMenuItem implements ActionListener {
-    private DrawPanel panel;
+    private DrawPanel drawPanel;
 
-    UngroupActionItem(DrawPanel panel) {
+    UngroupActionItem(DrawPanel drawPanel) {
         super("ungroup");
-        this.panel = panel;
+        this.drawPanel = drawPanel;
         addActionListener(this);
     }
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        System.out.println("ungroup");
-        panel.ungroup();
+        //System.out.println("ungroup");
+        drawPanel.ungroup();
     }
 }
 
@@ -59,17 +64,17 @@ class ButtonExit extends JButton implements ActionListener {
 }
 
 class ChangeObjNameItem extends JMenuItem implements ActionListener {
-    private DrawPanel panel;
+    private DrawPanel drawPanel;
 
-    ChangeObjNameItem(DrawPanel panel) {
+    ChangeObjNameItem(DrawPanel drawPanel) {
         super("change name");
-        this.panel = panel;
+        this.drawPanel = drawPanel;
         addActionListener(this);
     }
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        System.out.println("change name");
+        //System.out.println("change name");
 
         JFrame frame = new JFrame("new name");
 
@@ -85,20 +90,22 @@ class ChangeObjNameItem extends JMenuItem implements ActionListener {
         frame.add(base);
 
         frame.setSize(400, 200);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
 
 }
 
+/**
+ * construct menu bar structure
+ */
 class Menu extends JMenuBar {
 
-    Menu(DrawPanel panel) {
+    Menu(DrawPanel drawPanel) {
         JMenu file = new JMenu("File");
         JMenu edit = new JMenu("Edit");
-        edit.add(new GroupActionItem(panel));
-        edit.add(new UngroupActionItem(panel));
-        edit.add(new ChangeObjNameItem(panel));
+        edit.add(new GroupActionItem(drawPanel));
+        edit.add(new UngroupActionItem(drawPanel));
+        edit.add(new ChangeObjNameItem(drawPanel));
         add(file);
         add(edit);
     }

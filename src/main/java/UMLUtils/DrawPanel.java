@@ -6,88 +6,106 @@ import java.util.ArrayList;
 
 import javax.swing.JLayeredPane;
 
+/**
+ * All UML object will be created on this panel including 
+ * composite, class, use case, and line with different arrow head
+ */
 class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListener{
     private int depth = 0;
-    private MouseHandle handle;
-    private ArrayList<ADTBaseItem> items = new ArrayList<ADTBaseItem>();
-    private ArrayList<BaseLineItem> lines = new ArrayList<BaseLineItem>();
+    private MouseActionHandler mouseActionHandler;
+    private ArrayList<ADTBaseItem> adtBaseItems = new ArrayList<ADTBaseItem>();
+    private ArrayList<BaseLineItem> baseLineItems = new ArrayList<BaseLineItem>();
 
     DrawPanel() {
         addMouseListener(this);
         addMouseMotionListener(this);
     }
 
-    public void changeMode(MouseHandle handle) {
+    /**
+     * Mainly to be used by button action listener
+     * @param handle
+     */
+    public void changeMode(MouseActionHandler mouseActionHandler) {
         unselectAll();
         repaint();
-        this.handle = handle;
+        this.mouseActionHandler = mouseActionHandler;
     }
 
-    public void group(CompositeItem item) {
+    /**
+     * Group all selected object
+     * This function will move all selected object into composite object
+     * @param compositeItem 
+     */
+    public void group(CompositeItem compositeItem) {
         ArrayList<ADTBaseItem> list = new ArrayList<ADTBaseItem>();
-        for (ADTBaseItem adtBaseItem : items) {
+        for (ADTBaseItem adtBaseItem : adtBaseItems) {
             if (adtBaseItem.isSelected()) {
-                System.out.println(adtBaseItem);
                 list.add(adtBaseItem);
-                //items.remove(adtBaseItem);
             }
         }
 
-        for (ADTBaseItem adtBaseItem : list) {
-                System.out.println(adtBaseItem);
-           items.remove(adtBaseItem);
-        }
+        adtBaseItems.removeAll(list);
+        compositeItem.attachAll(list);
 
-        for (ADTBaseItem adtBaseItem : list) {
-                System.out.println(adtBaseItem);
-            item.attach(adtBaseItem);
-        }
-        items.add(item);
-        item.setSelected();
+        adtBaseItems.add(compositeItem);
+        compositeItem.setSelected();
         repaint();
     }
 
+    /**
+     * add all BaseItem in selected object which is composite object to adtBaseItems list
+     * and
+     * remove composite from drawPanel
+     */
     public void ungroup() {
         ArrayList<ADTBaseItem> list = new ArrayList<ADTBaseItem>();
         ArrayList<ADTBaseItem> removeList = new ArrayList<ADTBaseItem>();
-        for (ADTBaseItem adtBaseItem : items) {
-            if (adtBaseItem.isSelected() && adtBaseItem.isGroup()) {
-                list.addAll( ((CompositeItem)adtBaseItem).detach() );
-                removeList.add(adtBaseItem);
+        for (ADTBaseItem adtBaseItem : adtBaseItems) {
+            if (adtBaseItem.isSelected()) {
+                ArrayList<ADTBaseItem> tmp = adtBaseItem.detachAll();
+                if (tmp != null) {
+                    list.addAll(tmp);
+                    removeList.add(adtBaseItem);
+                }
+
             }
         }
-        for (ADTBaseItem adtBaseItem : removeList) {
-            items.remove(adtBaseItem);
-        }
-        items.addAll(list);
+
+        adtBaseItems.removeAll(removeList);
+        adtBaseItems.addAll(list);
         unselectAll();
         repaint();
     }
 
-    public void add(BaseItem item) {
-        items.add(item);
-        add(item, depth);
-        setLayer(item, depth);
+    /**
+     * composite object will not be add by this method
+     * So the highest layer is BaseItem 
+     * @param baseItem
+     */
+    public void add(BaseItem baseItem) {
+        adtBaseItems.add(baseItem);
+        add(baseItem, depth);
+        setLayer(baseItem, depth);
         depth++;
     }
 
-    public void add(BaseLineItem line) {
-        lines.add(line);
+    public void add(BaseLineItem baseLineItem) {
+        baseLineItems.add(baseLineItem);
     }
 
     public void unselectAll() {
-        for (ADTBaseItem adtbaseItem : items) {
+        for (ADTBaseItem adtbaseItem : adtBaseItems) {
             if (adtbaseItem.isSelected()) {
                 adtbaseItem.setUnselected();
             }
         }
     }
 
-    private boolean isItemContain(ADTBaseItem item, int x, int y) {
-        int left = item.getX();
-        int top = item.getY();
-        int bottom = top + item.getHeight();
-        int right = left + item.getWidth();
+    private boolean isItemContain(ADTBaseItem adtBaseItem, int x, int y) {
+        int left = adtBaseItem.getX();
+        int top = adtBaseItem.getY();
+        int bottom = top + adtBaseItem.getHeight();
+        int right = left + adtBaseItem.getWidth();
         return left < x && x < right && top < y && y < bottom;
     }
 
@@ -95,10 +113,16 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
         return findItemAt((int)point.getX(), (int)point.getY());
     }
 
+    /**
+     * find the highest layer adtBaseitem at (x, y)
+     * @param x
+     * @param y
+     * @return
+     */
     public ADTBaseItem findItemAt(int x, int y) {
         int maxDepth = -30000;
         ADTBaseItem ret = null;
-        for (ADTBaseItem adtbaseItem : items) {
+        for (ADTBaseItem adtbaseItem : adtBaseItems) {
             if (isItemContain(adtbaseItem, x, y)) {
                 if (maxDepth < getLayer(adtbaseItem)) {
                     maxDepth = getLayer(adtbaseItem);
@@ -109,16 +133,16 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
         return ret;
     }
 
-    private boolean isItemInRegion(ADTBaseItem item, int left, int right, int top, int bottom) {
-        return left < item.getX() &&
-               top < item.getY() && 
-               item.getX() + item.getWidth() < right &&
-               item.getY() + item.getHeight() < bottom;
+    private boolean isItemInRegion(ADTBaseItem adtBaseItem, int left, int right, int top, int bottom) {
+        return left < adtBaseItem.getX() &&
+               top < adtBaseItem.getY() && 
+               adtBaseItem.getX() + adtBaseItem.getWidth() < right &&
+               adtBaseItem.getY() + adtBaseItem.getHeight() < bottom;
     }
 
     public ArrayList<ADTBaseItem> findItemInRegion(int left, int right, int top, int bottom) {
         ArrayList<ADTBaseItem> list = new ArrayList<ADTBaseItem>();
-        for (ADTBaseItem adtbaseItem : items) {
+        for (ADTBaseItem adtbaseItem : adtBaseItems) {
             if (isItemInRegion(adtbaseItem, left, right, top, bottom)) {
                 list.add(adtbaseItem);
             }
@@ -126,36 +150,44 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
         return list;
     }
 
+    /**
+     * manual draw all adtbaseItem with its own draw function
+     * also for line object
+     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        for (ADTBaseItem adtbaseItem : items) {
+        for (ADTBaseItem adtbaseItem : adtBaseItems) {
             adtbaseItem.draw(g);
         }
-        for (BaseLineItem baseLineItem: lines) {
+        for (BaseLineItem baseLineItem: baseLineItems) {
             baseLineItem.draw(g);
         }
     }
 
+    /**
+     * The following are mouse action listener
+     * They will be handler by MouseActionHandler interface
+     */
     @Override
     public void mouseDragged(MouseEvent arg0) {
-        handle.draggedHandler(this, arg0);
+        mouseActionHandler.draggedHandler(this, arg0);
     }
 
 
     @Override
     public void mouseClicked(MouseEvent arg0) {
-        handle.clickedHandler(this, arg0);
+        mouseActionHandler.clickedHandler(this, arg0);
     }
 
     @Override
     public void mousePressed(MouseEvent arg0) {
-        handle.pressedHandler(this, arg0);
+        mouseActionHandler.pressedHandler(this, arg0);
     }
 
     @Override
     public void mouseReleased(MouseEvent arg0) {
-        handle.releasedHandler(this, arg0);
+        mouseActionHandler.releasedHandler(this, arg0);
     }
 
     @Override

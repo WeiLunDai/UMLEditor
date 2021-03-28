@@ -1,16 +1,18 @@
 package UMLUtils;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 
+/**
+ * abstruct data type for both composite and baseItem
+ * some precolating here with a predefined empty function
+ */
 abstract class ADTBaseItem extends JPanel {
     protected boolean selected;
-    protected boolean group;
 
-    Boolean isGroup() {
-        return this.group;
+    public enum direct {
+        NODIRECT,LEFT,RIGHT,TOP,BOTTOM;
     }
 
     Boolean isSelected() {
@@ -19,49 +21,67 @@ abstract class ADTBaseItem extends JPanel {
 
     void setSelected() {
         selected = true;
-        System.out.println("set selected");
+        //System.out.println("set selected");
     }
 
     void setUnselected() {
         selected = false;
-        System.out.println("set unselected");
+        //System.out.println("set unselected");
     }
 
+    ADTBaseItem.direct getDirect(Point point) {return ADTBaseItem.direct.NODIRECT;}
+
+    Point getPort(ADTBaseItem.direct dir) {return null;}
+
+    void attachAll(ADTBaseItem item) { }
+
+    ArrayList<ADTBaseItem> detachAll() { return null; }
+
+    /**
+     * empty method, this paint will be handler by draw method
+     * and do repaint by drawPanel
+     */
     public void paintComponent(Graphics g) { }
 
     abstract void draw(Graphics g);
 }
 
+/**
+ * a object contains more adtbaseItem
+ * constructe once by attachAll
+ * destructe once by detachAll
+ * 
+ * the region of composite will not be reset
+ */
 class CompositeItem extends ADTBaseItem {
     ArrayList<ADTBaseItem> member = new ArrayList<ADTBaseItem>();
-    private int left = 999;
+    private int left = Integer.MAX_VALUE;
     private int right = 0;
-    private int top = 999;
+    private int top = Integer.MAX_VALUE;
     private int bottom = 0;
-
-    CompositeItem() {
-        this.group = true;
-    }
 
     void setSelected() {
         selected = true;
         for (ADTBaseItem adtBaseItem : member) {
             adtBaseItem.setUnselected();
         }
-        System.out.println("set selected");
+        //System.out.println("set selected");
     }
 
-    void attach(ADTBaseItem item) {
-        member.add(item);
-        left = Math.min(left, item.getX());
-        right = Math.max(right, item.getX() + item.getWidth());
-        top = Math.min(top, item.getY());
-        bottom = Math.max(bottom, item.getY() + item.getHeight());
+    void attachAll(ArrayList<ADTBaseItem> adtBaseItems) {
+        member.addAll(adtBaseItems);
+        for (ADTBaseItem adtBaseItem : member) {
+            left = Math.min(left, adtBaseItem.getX());
+            right = Math.max(right, adtBaseItem.getX() + adtBaseItem.getWidth());
+            top = Math.min(top, adtBaseItem.getY());
+            bottom = Math.max(bottom, adtBaseItem.getY() + adtBaseItem.getHeight());
+        }
+        /* !remember we already override setLocation */
         super.setLocation(left, top);
         setSize(right - left, bottom - top);
     }
 
-    ArrayList<ADTBaseItem> detach() {
+    ArrayList<ADTBaseItem> detachAll() {
         return member;
     }
 
@@ -90,15 +110,13 @@ class CompositeItem extends ADTBaseItem {
     }
 }
 
+/**
+ * base object with ports property
+ */
 abstract class BaseItem extends ADTBaseItem {
     private int portSize = 8;
 
-    public enum direct {
-        LEFT,RIGHT,TOP,BOTTOM;
-    }
-
     protected BaseItem(int x,int y) {
-        group = false;
         selected = false;
         setLocation(x, y);
         setSize(90, 60);
@@ -112,7 +130,7 @@ abstract class BaseItem extends ADTBaseItem {
         return getPort(getDirect(x, y));
     }
 
-    Point getPort(direct dir) {
+    Point getPort(ADTBaseItem.direct dir ) {
         if (dir == direct.LEFT) {
             return new Point(getX(), getY() + getHeight() / 2);
         }
@@ -128,11 +146,11 @@ abstract class BaseItem extends ADTBaseItem {
         return null;
     }
 
-    BaseItem.direct getDirect(Point point) {
+    ADTBaseItem.direct getDirect(Point point) {
         return getDirect((int)point.getX(), (int)point.getY());
     }
 
-    BaseItem.direct getDirect(int x, int y) {
+    ADTBaseItem.direct getDirect(int x, int y) {
         double locX = (double)(x - getX());
         double locY = (double)(y - getY());
         double axisX = (double)getWidth();
@@ -141,26 +159,26 @@ abstract class BaseItem extends ADTBaseItem {
         axisY *= (-1);
         boolean upLeft = (locY < ((axisY / axisX) * locX - axisY));
         if (upRight && upLeft) {
-            return BaseItem.direct.TOP;
+            return ADTBaseItem.direct.TOP;
         }
         if (upRight && !upLeft) {
-            return BaseItem.direct.RIGHT;
+            return ADTBaseItem.direct.RIGHT;
         }
         if (!upRight && upLeft) {
-            return BaseItem.direct.LEFT;
+            return ADTBaseItem.direct.LEFT;
         }
         if (!upRight && !upLeft) {
-            return BaseItem.direct.BOTTOM;
+            return ADTBaseItem.direct.BOTTOM;
         }
-        return null;
+        return ADTBaseItem.direct.NODIRECT;
     }
 
     public void drawPorts(Graphics g) {
         Point ports[] = new Point[4];
-        ports[0] = getPort(BaseItem.direct.LEFT);
-        ports[1] = getPort(BaseItem.direct.RIGHT);
-        ports[2] = getPort(BaseItem.direct.TOP);
-        ports[3] = getPort(BaseItem.direct.BOTTOM);
+        ports[0] = getPort(ADTBaseItem.direct.LEFT);
+        ports[1] = getPort(ADTBaseItem.direct.RIGHT);
+        ports[2] = getPort(ADTBaseItem.direct.TOP);
+        ports[3] = getPort(ADTBaseItem.direct.BOTTOM);
         g.drawRect(ports[0].x - portSize, ports[0].y - portSize / 2, portSize, portSize);
         g.drawRect(ports[1].x , ports[1].y - portSize / 2, portSize, portSize);
         g.drawRect(ports[2].x - portSize / 2, ports[2].y - portSize, portSize, portSize);
@@ -169,6 +187,9 @@ abstract class BaseItem extends ADTBaseItem {
 
 }
 
+/**
+ * draw rectangle
+ */
 class RectItem extends BaseItem {
 
     RectItem(int x, int y) {
@@ -187,6 +208,9 @@ class RectItem extends BaseItem {
     }
 }
 
+/**
+ * draw oval
+ */
 class OvalItem extends BaseItem {
 
     OvalItem(int x, int y) {
@@ -205,15 +229,19 @@ class OvalItem extends BaseItem {
     }
 }
 
+/**
+ * abstract line base item
+ * must be initialized with a start point
+ */
 abstract class BaseLineItem {
-    protected BaseItem start;
-    protected BaseItem.direct startDirect;
-    protected BaseItem end;
-    protected BaseItem.direct endDirect;
+    protected ADTBaseItem start;
+    protected ADTBaseItem.direct startDirect;
+    protected ADTBaseItem end;
+    protected ADTBaseItem.direct endDirect;
     protected int arrowSize = 20;
     protected double arrowAngle = Math.PI / 6;
 
-    BaseLineItem(BaseItem start, BaseItem.direct startDirect) {
+    BaseLineItem(ADTBaseItem start, ADTBaseItem.direct startDirect) {
         this.start = start;
         this.startDirect = startDirect;
         setEnd(null, null);
@@ -221,19 +249,33 @@ abstract class BaseLineItem {
 
     abstract void drawArrow(Graphics g, int endX, int endY);
 
-    void setEnd(BaseItem item, BaseItem.direct direct) {
-        this.end = item;
-        this.endDirect = direct;
+    void setEnd(ADTBaseItem end, ADTBaseItem.direct endDirect) {
+        this.end = end;
+        this.endDirect = endDirect;
     }
 
+    /**
+     * draw with a end point
+     * @param g
+     * @param endX
+     * @param endY
+     */
     void draw(Graphics g, int endX, int endY) {
-        Point point = start.getPort(startDirect);
-        g.drawLine(point.x, point.y, endX, endY);
-        drawArrow(g, endX, endY);
+        if (start != null && startDirect != ADTBaseItem.direct.NODIRECT) {
+            Point point = start.getPort(startDirect);
+            g.drawLine(point.x, point.y, endX, endY);
+            drawArrow(g, endX, endY);
+        }
     }
 
+    /**
+     * draw with end object
+     * If no end object exist, then do nothing
+     * @param g
+     */
     void draw(Graphics g) {
-        if (end != null) {
+        if (start != null && startDirect != ADTBaseItem.direct.NODIRECT &&
+            end != null && endDirect != ADTBaseItem.direct.NODIRECT) {
             Point endPoint = end.getPort(endDirect);
             draw(g, endPoint.x, endPoint.y);
             drawArrow(g, endPoint.x, endPoint.y);
@@ -241,9 +283,12 @@ abstract class BaseLineItem {
     }
 }
 
+/**
+ * draw associative line head
+ */
 class AssocLineItem extends BaseLineItem {
 
-    public AssocLineItem(BaseItem start, BaseItem.direct startDirect) {
+    public AssocLineItem(ADTBaseItem start, ADTBaseItem.direct startDirect) {
         super(start, startDirect);
     }
 
@@ -272,9 +317,12 @@ class AssocLineItem extends BaseLineItem {
     }
 }
 
+/**
+ * draw general line head
+ */
 class GenerLineItem extends BaseLineItem {
 
-    GenerLineItem(BaseItem start, BaseItem.direct startDirect) {
+    GenerLineItem(ADTBaseItem start, ADTBaseItem.direct startDirect) {
         super(start, startDirect);
     }
 
@@ -305,9 +353,12 @@ class GenerLineItem extends BaseLineItem {
 
 }
 
+/**
+ * draw composite line head
+ */
 class ComposLineItem extends BaseLineItem {
 
-    ComposLineItem(BaseItem start, BaseItem.direct startDirect) {
+    ComposLineItem(ADTBaseItem start, ADTBaseItem.direct startDirect) {
         super(start, startDirect);
     }
 
