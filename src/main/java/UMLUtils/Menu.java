@@ -25,7 +25,6 @@ class GroupActionItem extends JMenuItem implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        //System.out.println("group");
         drawPanel.group(new CompositeItem());
     }
 }
@@ -41,25 +40,43 @@ class UngroupActionItem extends JMenuItem implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        //System.out.println("ungroup");
         drawPanel.ungroup();
     }
 }
 
-class ButtonExit extends JButton implements ActionListener {
-    private JFrame frame;
+class AskFrame extends JFrame implements ActionListener {
+    private DrawPanel drawPanel;
+    private JTextField textField = new JTextField(20);
+    private JPanel panel = new JPanel();
+    private JButton ok = new JButton("OK");
+    private JButton cancel = new JButton("cancel");
 
-    ButtonExit(String name, JFrame frame) {
-        super(name);
-        this.frame = frame;
-        addActionListener(this);
+    AskFrame (DrawPanel drawPanel) {
+        this.drawPanel = drawPanel;
+        ok.setActionCommand("ok");
+        ok.addActionListener(this);
+        cancel.setActionCommand("cancel");
+        cancel.addActionListener(this);
+
+        panel.add(textField);
+        panel.add(ok);
+        panel.add(cancel);
+
+        add(panel);
+
+        setSize(400, 200);
+        setVisible(true);
     }
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        frame.dispose();
+        String action = arg0.getActionCommand();
+        if (action.equals("ok")) {
+            drawPanel.changeName(textField.getText());
+            drawPanel.repaint();
+        }
+        dispose();
     }
-
 }
 
 class ChangeObjNameItem extends JMenuItem implements ActionListener {
@@ -73,35 +90,18 @@ class ChangeObjNameItem extends JMenuItem implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        //System.out.println("change name");
-
-        JFrame frame = new JFrame("new name");
-
-        JPanel base = new JPanel();
-        JButton ok = new ButtonExit("OK", frame);
-        JButton cancel = new ButtonExit("Cancel", frame);
-        JTextField text = new JTextField(20);
-
-        base.add(text);
-        base.add(ok);
-        base.add(cancel);
-
-        frame.add(base);
-
-        frame.setSize(400, 200);
-        frame.setVisible(true);
+        new AskFrame(drawPanel);
     }
-
 }
 
 /**
  * construct menu bar structure
  */
 class Menu extends JMenuBar {
+    JMenu file = new JMenu("File");
+    JMenu edit = new JMenu("Edit");
 
     Menu(DrawPanel drawPanel) {
-        JMenu file = new JMenu("File");
-        JMenu edit = new JMenu("Edit");
         edit.add(new GroupActionItem(drawPanel));
         edit.add(new UngroupActionItem(drawPanel));
         edit.add(new ChangeObjNameItem(drawPanel));

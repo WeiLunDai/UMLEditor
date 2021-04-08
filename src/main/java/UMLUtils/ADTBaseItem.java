@@ -1,6 +1,7 @@
 package UMLUtils;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 
@@ -115,11 +116,16 @@ class CompositeItem extends ADTBaseItem {
  */
 abstract class BaseItem extends ADTBaseItem {
     private int portSize = 8;
+    protected String name = "";
 
     protected BaseItem(int x,int y) {
         selected = false;
         setLocation(x, y);
         setSize(90, 60);
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     Point getPort(Point point) {
@@ -185,6 +191,16 @@ abstract class BaseItem extends ADTBaseItem {
         g.drawRect(ports[3].x - portSize / 2, ports[3].y, portSize, portSize);
     }
 
+    public void drawName(Graphics g) {
+        if (!name.isEmpty()) {
+            g.setFont(new Font("Serif", Font.BOLD, 16));
+            FontMetrics fontMetrics = g.getFontMetrics();
+            int textX = getX() + (getWidth() - fontMetrics.stringWidth(name)) / 2;
+            int textY = getY() + (getHeight() + fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
+            g.drawString(name, textX, textY);
+        }
+    }
+
 }
 
 /**
@@ -194,17 +210,31 @@ class RectItem extends BaseItem {
 
     RectItem(int x, int y) {
         super(x, y);
+        setSize(90, 90);
+    }
+
+    @Override
+    public void drawName(Graphics g) {
+        if (!name.isEmpty()) {
+            g.setFont(new Font("Serif", Font.BOLD, 16));
+            FontMetrics fontMetrics = g.getFontMetrics();
+            int textX = getX() + (getWidth() - fontMetrics.stringWidth(name)) / 2;
+            int textY = getY() + (getHeight() / 3 + fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
+            g.drawString(name, textX, textY);
+        }
     }
 
     @Override
     void draw(Graphics g) {
         g.setColor(Color.LIGHT_GRAY);
-        g.fillRect(getX(), getY(), getWidth(), getHeight());
+        g.fillRect(getX(), getY(), getWidth(), getHeight() / 3);
         g.setColor(Color.BLACK);
+        g.drawRect(getX(), getY() + getHeight() / 3, getWidth() - 1, getHeight() / 3);
         g.drawRect(getX(), getY(), getWidth() - 1, getHeight() - 1);
         if (isSelected()) {
             drawPorts(g);
         }
+        drawName(g);
     }
 }
 
@@ -226,6 +256,7 @@ class OvalItem extends BaseItem {
         if (isSelected()) {
             drawPorts(g);
         }
+        drawName(g);
     }
 }
 
@@ -238,8 +269,6 @@ abstract class BaseLineItem {
     protected ADTBaseItem.direct startDirect;
     protected ADTBaseItem end;
     protected ADTBaseItem.direct endDirect;
-    protected int arrowSize = 20;
-    protected double arrowAngle = Math.PI / 6;
 
     BaseLineItem(ADTBaseItem start, ADTBaseItem.direct startDirect) {
         this.start = start;
@@ -295,24 +324,18 @@ class AssocLineItem extends BaseLineItem {
     @Override
     void drawArrow(Graphics g, int endX, int endY) {
         Point startPoint = start.getPort(startDirect);
+        Graphics2D g2 = (Graphics2D)g;
+        AffineTransform tx1 = g2.getTransform();
+        AffineTransform tx2 = (AffineTransform)tx1.clone();
+        double theta = Math.atan2(endY - startPoint.y, endX - startPoint.x);
 
-        double vecX = startPoint.x - endX;
-        double vecY = startPoint.y - endY;
-        vecX = vecX * Math.cos(arrowAngle) - vecY * Math.sin(arrowAngle);
-        vecY = vecX * Math.sin(arrowAngle) + vecY * Math.cos(arrowAngle);
-        double multip = arrowSize / Math.pow(Math.pow(vecX, 2) + Math.pow(vecY, 2), 0.5);
-        vecX *= multip;
-        vecY *= multip;
-        g.drawLine(endX, endY, endX + (int)vecX, endY + (int)vecY);
+        tx2.translate(endX, endY);
+        tx2.rotate(theta - Math.PI / 2);
 
-        vecX = startPoint.x - endX;
-        vecY = startPoint.y - endY;
-        vecX = vecX * Math.cos(arrowAngle) + vecY * Math.sin(arrowAngle);
-        vecY = vecY * Math.cos(arrowAngle) - vecX * Math.sin(arrowAngle);
-        multip = arrowSize / Math.pow(Math.pow(vecX, 2) + Math.pow(vecY, 2), 0.5);
-        vecX *= multip;
-        vecY *= multip;
-        g.drawLine(endX, endY, endX + (int)vecX, endY + (int)vecY);
+        g2.setTransform(tx2);
+        g2.drawLine(0, 0, -7, -14);
+        g2.drawLine(0, 0, 7, -14);
+        g2.setTransform(tx1);
 
     }
 }
@@ -329,26 +352,25 @@ class GenerLineItem extends BaseLineItem {
     @Override
     void drawArrow(Graphics g, int endX, int endY) {
         Point startPoint = start.getPort(startDirect);
+        Graphics2D g2 = (Graphics2D)g;
+        Polygon polygon = new Polygon();
+        AffineTransform tx1 = g2.getTransform();
+        AffineTransform tx2 = (AffineTransform)tx1.clone();
+        double theta = Math.atan2(endY - startPoint.y, endX - startPoint.x);
 
-        double lvecX = startPoint.x - endX;
-        double lvecY = startPoint.y - endY;
-        lvecX = lvecX * Math.cos(arrowAngle) - lvecY * Math.sin(arrowAngle);
-        lvecY = lvecX * Math.sin(arrowAngle) + lvecY * Math.cos(arrowAngle);
-        double multip = arrowSize / Math.pow(Math.pow(lvecX, 2) + Math.pow(lvecY, 2), 0.5);
-        lvecX *= multip;
-        lvecY *= multip;
-        g.drawLine(endX, endY, endX + (int)lvecX, endY + (int)lvecY);
+        polygon.addPoint(0, 0);
+        polygon.addPoint(-7, -14);
+        polygon.addPoint(7, -14);
 
-        double rvecX = startPoint.x - endX;
-        double rvecY = startPoint.y - endY;
-        rvecX = rvecX * Math.cos(arrowAngle) + rvecY * Math.sin(arrowAngle);
-        rvecY = rvecY * Math.cos(arrowAngle) - rvecX * Math.sin(arrowAngle);
-        multip = arrowSize / Math.pow(Math.pow(rvecX, 2) + Math.pow(rvecY, 2), 0.5);
-        rvecX *= multip;
-        rvecY *= multip;
-        g.drawLine(endX, endY, endX + (int)rvecX, endY + (int)rvecY);
+        tx2.translate(endX, endY);
+        tx2.rotate(theta - Math.PI / 2);
 
-        g.drawLine(endX + (int)lvecX, endY + (int)lvecY, endX + (int)rvecX, endY + (int)rvecY);
+        g2.setTransform(tx2);
+        g2.setColor(Color.WHITE);
+        g2.fill(polygon);
+        g2.setColor(Color.BLACK);
+        g2.draw(polygon);
+        g2.setTransform(tx1);
     }
 
 }
@@ -365,31 +387,25 @@ class ComposLineItem extends BaseLineItem {
     @Override
     void drawArrow(Graphics g, int endX, int endY) {
         Point startPoint = start.getPort(startDirect);
+        Graphics2D g2 = (Graphics2D)g;
+        Polygon polygon = new Polygon();
+        AffineTransform tx1 = g2.getTransform();
+        AffineTransform tx2 = (AffineTransform)tx1.clone();
+        double theta = Math.atan2(endY - startPoint.y, endX - startPoint.x);
 
-        double lvecX = startPoint.x - endX;
-        double lvecY = startPoint.y - endY;
-        lvecX = lvecX * Math.cos(arrowAngle) - lvecY * Math.sin(arrowAngle);
-        lvecY = lvecX * Math.sin(arrowAngle) + lvecY * Math.cos(arrowAngle);
-        double multip = arrowSize / Math.pow(Math.pow(lvecX, 2) + Math.pow(lvecY, 2), 0.5);
-        lvecX *= multip;
-        lvecY *= multip;
-        g.drawLine(endX, endY, endX + (int)lvecX, endY + (int)lvecY);
+        polygon.addPoint(0, 0);
+        polygon.addPoint(-6, -12);
+        polygon.addPoint(0, -24);
+        polygon.addPoint(6, -12);
 
-        double rvecX = startPoint.x - endX;
-        double rvecY = startPoint.y - endY;
-        rvecX = rvecX * Math.cos(arrowAngle) + rvecY * Math.sin(arrowAngle);
-        rvecY = rvecY * Math.cos(arrowAngle) - rvecX * Math.sin(arrowAngle);
-        multip = arrowSize / Math.pow(Math.pow(rvecX, 2) + Math.pow(rvecY, 2), 0.5);
-        rvecX *= multip;
-        rvecY *= multip;
-        g.drawLine(endX, endY, endX + (int)rvecX, endY + (int)rvecY);
+        tx2.translate(endX, endY);
+        tx2.rotate(theta - Math.PI / 2);
 
-        int tmpX = endX + (int)lvecX;
-        int tmpY = endY + (int)lvecY;
-        g.drawLine(tmpX, tmpY, tmpX + (int)rvecX, tmpY + (int)rvecY);
-        tmpX = endX + (int)rvecX;
-        tmpY = endY + (int)rvecY;
-
-        g.drawLine(tmpX, tmpY, tmpX + (int)lvecX, tmpY + (int)lvecY);
+        g2.setTransform(tx2);
+        g2.setColor(Color.WHITE);
+        g2.fill(polygon);
+        g2.setColor(Color.BLACK);
+        g2.draw(polygon);
+        g2.setTransform(tx1);
     }
 }

@@ -1,6 +1,6 @@
 package UMLUtils;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.ArrayList;
 
 interface MouseActionHandler {
@@ -68,7 +68,6 @@ class DrawSelectAction extends BaseDraw {
         pressed = e.getPoint();
         drawPanel.unselectAll();
         moveItem = drawPanel.findItemAt(pressed.x, pressed.y);
-        //System.out.println(moveItem);
         if (moveItem != null) {
             moveItem.setSelected();
         }
@@ -148,12 +147,10 @@ abstract class DrawLineAction extends BaseDraw {
             drawPanel.paint(drawPanel.getGraphics());
             line.draw(drawPanel.getGraphics(), e.getX(), e.getY());
         }
-        //System.out.println("dragged");
     }
 
     @Override
     public void releasedHandler(DrawPanel panel, java.awt.event.MouseEvent e) {
-        //System.out.println("release");
         end = panel.findItemAt(e.getX(), e.getY());
         if (start != null && end != null && start != end) {
             line.setEnd(end, end.getDirect(e.getPoint()));

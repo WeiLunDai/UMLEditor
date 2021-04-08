@@ -1,22 +1,26 @@
 package UMLUtils;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+
 import javax.swing.JFrame;
+import javax.swing.JMenuBar;
 
 /**
  * Main windows entry point 
  */
 class AppUI extends JFrame {
+    private DrawPanel drawPanel = new DrawPanel();
+    private JMenuBar menuBar = new Menu(drawPanel);
+    private ToolsPanel toolsPanel = new ToolsPanel(drawPanel);
 
     public AppUI () {
 
         /**
          * add three major object to frame
          */
-        DrawPanel drawPanel = new DrawPanel();
         add(drawPanel);
-        setJMenuBar(new Menu(drawPanel));
-        add(new ToolsPanel(drawPanel), BorderLayout.WEST);
+        setJMenuBar(menuBar);
+        add(toolsPanel, BorderLayout.WEST);
 
         setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -25,6 +29,5 @@ class AppUI extends JFrame {
     public static void main( String[] args )
     {
         new AppUI();
-        //System.out.println( "Hello World!" );
     }
 }

@@ -1,7 +1,10 @@
 package UMLUtils;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
 import javax.swing.JLayeredPane;
@@ -31,6 +34,14 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
         this.mouseActionHandler = mouseActionHandler;
     }
 
+    public void changeName(String name) {
+        for (ADTBaseItem adtBaseItem : adtBaseItems) {
+            if (adtBaseItem.isSelected()) {
+                adtBaseItem.setName(name);
+            }
+        }
+    }
+
     /**
      * Group all selected object
      * This function will move all selected object into composite object
@@ -42,6 +53,9 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
             if (adtBaseItem.isSelected()) {
                 list.add(adtBaseItem);
             }
+        }
+        if (list.isEmpty()) {
+            return;
         }
 
         adtBaseItems.removeAll(list);
