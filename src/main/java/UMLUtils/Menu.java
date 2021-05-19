@@ -99,8 +99,8 @@ class ChangeObjNameItem extends JMenuItem implements ActionListener {
  * construct menu bar structure
  */
 class Menu extends JMenuBar {
-    JMenu file = new JMenu("File");
-    JMenu edit = new JMenu("Edit");
+    private JMenu file = new JMenu("File");
+    private JMenu edit = new JMenu("Edit");
 
     Menu(DrawPanel drawPanel) {
         edit.add(new GroupActionItem(drawPanel));

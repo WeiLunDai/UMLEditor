@@ -1,5 +1,6 @@
 package UMLUtils;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -171,6 +172,8 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, getWidth(), getHeight());
         for (ADTBaseItem adtbaseItem : adtBaseItems) {
             adtbaseItem.draw(g);
         }
