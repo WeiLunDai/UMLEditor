@@ -10,24 +10,30 @@ import java.util.ArrayList;
 
 import javax.swing.JLayeredPane;
 
+import UMLUtils.Canvas.ADTBaseShape;
+import UMLUtils.Canvas.CompositeItem;
+import UMLUtils.Canvas.ActionListener.MouseActionHandler;
+import UMLUtils.Canvas.Line.BaseLine;
+import UMLUtils.Canvas.Shape.BaseShape;
+
 /**
  * All UML object will be created on this panel including 
  * composite, class, use case, and line with different arrow head
  */
-class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListener{
+public class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListener{
     private int depth = 0;
     private MouseActionHandler mouseActionHandler;
-    private ArrayList<ADTBaseItem> adtBaseItems = new ArrayList<ADTBaseItem>();
-    private ArrayList<BaseLineItem> baseLineItems = new ArrayList<BaseLineItem>();
+    private ArrayList<ADTBaseShape> adtBaseShapes = new ArrayList<ADTBaseShape>();
+    private ArrayList<BaseLine> baseLines = new ArrayList<BaseLine>();
 
-    DrawPanel() {
+    public DrawPanel() {
         addMouseListener(this);
         addMouseMotionListener(this);
     }
 
     /**
      * Mainly to be used by button action listener
-     * @param handle
+     * @param mouseActionHandler
      */
     public void changeMode(MouseActionHandler mouseActionHandler) {
         unselectAll();
@@ -36,9 +42,9 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
     }
 
     public void changeName(String name) {
-        for (ADTBaseItem adtBaseItem : adtBaseItems) {
-            if (adtBaseItem.isSelected()) {
-                adtBaseItem.setName(name);
+        for (ADTBaseShape adtBaseShape: adtBaseShapes) {
+            if (adtBaseShape.isSelected()) {
+                adtBaseShape.setName(name);
             }
         }
     }
@@ -46,48 +52,49 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
     /**
      * Group all selected object
      * This function will move all selected object into composite object
-     * @param compositeItem 
+     * 
      */
-    public void group(CompositeItem compositeItem) {
-        ArrayList<ADTBaseItem> list = new ArrayList<ADTBaseItem>();
-        for (ADTBaseItem adtBaseItem : adtBaseItems) {
-            if (adtBaseItem.isSelected()) {
-                list.add(adtBaseItem);
+    public void group() {
+        ArrayList<ADTBaseShape> list = new ArrayList<ADTBaseShape>();
+        for (ADTBaseShape adtBaseShape : adtBaseShapes) {
+            if (adtBaseShape.isSelected()) {
+                list.add(adtBaseShape);
             }
         }
         if (list.isEmpty()) {
             return;
         }
 
-        adtBaseItems.removeAll(list);
+        CompositeItem compositeItem = new CompositeItem();
+        adtBaseShapes.removeAll(list);
         compositeItem.attachAll(list);
 
-        adtBaseItems.add(compositeItem);
+        adtBaseShapes.add(compositeItem);
         compositeItem.setSelected();
         repaint();
     }
 
     /**
-     * add all BaseItem in selected object which is composite object to adtBaseItems list
+     * add all BaseItem in selected object which is composite object to adtBaseShape list
      * and
      * remove composite from drawPanel
      */
     public void ungroup() {
-        ArrayList<ADTBaseItem> list = new ArrayList<ADTBaseItem>();
-        ArrayList<ADTBaseItem> removeList = new ArrayList<ADTBaseItem>();
-        for (ADTBaseItem adtBaseItem : adtBaseItems) {
-            if (adtBaseItem.isSelected()) {
-                ArrayList<ADTBaseItem> tmp = adtBaseItem.detachAll();
+        ArrayList<ADTBaseShape> list = new ArrayList<ADTBaseShape>();
+        ArrayList<ADTBaseShape> removeList = new ArrayList<ADTBaseShape>();
+        for (ADTBaseShape adtBaseShape : adtBaseShapes) {
+            if (adtBaseShape.isSelected()) {
+                ArrayList<ADTBaseShape> tmp = adtBaseShape.detachAll();
                 if (tmp != null) {
                     list.addAll(tmp);
-                    removeList.add(adtBaseItem);
+                    removeList.add(adtBaseShape);
                 }
 
             }
         }
 
-        adtBaseItems.removeAll(removeList);
-        adtBaseItems.addAll(list);
+        adtBaseShapes.removeAll(removeList);
+        adtBaseShapes.addAll(list);
         unselectAll();
         repaint();
     }
@@ -97,35 +104,31 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
      * So the highest layer is BaseItem 
      * @param baseItem
      */
-    public void add(BaseItem baseItem) {
-        adtBaseItems.add(baseItem);
+    public void add(BaseShape baseItem) {
+        adtBaseShapes.add(baseItem);
         add(baseItem, depth);
         setLayer(baseItem, depth);
         depth++;
     }
 
-    public void add(BaseLineItem baseLineItem) {
-        baseLineItems.add(baseLineItem);
+    public void add(BaseLine baseLine) {
+        baseLines.add(baseLine);
     }
 
     public void unselectAll() {
-        for (ADTBaseItem adtbaseItem : adtBaseItems) {
-            if (adtbaseItem.isSelected()) {
-                adtbaseItem.setUnselected();
+        for (ADTBaseShape adtBaseShape : adtBaseShapes) {
+            if (adtBaseShape.isSelected()) {
+                adtBaseShape.setUnselected();
             }
         }
     }
 
-    private boolean isItemContain(ADTBaseItem adtBaseItem, int x, int y) {
-        int left = adtBaseItem.getX();
-        int top = adtBaseItem.getY();
-        int bottom = top + adtBaseItem.getHeight();
-        int right = left + adtBaseItem.getWidth();
+    private boolean isItemContain(ADTBaseShape adtBaseShape, int x, int y) {
+        int left = adtBaseShape.getX();
+        int top = adtBaseShape.getY();
+        int bottom = top + adtBaseShape.getHeight();
+        int right = left + adtBaseShape.getWidth();
         return left < x && x < right && top < y && y < bottom;
-    }
-
-    public ADTBaseItem findItemAt(Point point) {
-        return findItemAt((int)point.getX(), (int)point.getY());
     }
 
     /**
@@ -134,32 +137,37 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
      * @param y
      * @return
      */
-    public ADTBaseItem findItemAt(int x, int y) {
+    public ADTBaseShape findItemAt(int x, int y) {
         int maxDepth = -30000;
-        ADTBaseItem ret = null;
-        for (ADTBaseItem adtbaseItem : adtBaseItems) {
-            if (isItemContain(adtbaseItem, x, y)) {
-                if (maxDepth < getLayer(adtbaseItem)) {
-                    maxDepth = getLayer(adtbaseItem);
-                    ret = adtbaseItem;
+        ADTBaseShape ret = null;
+        for (ADTBaseShape adtBaseShape: adtBaseShapes) {
+            if (isItemContain(adtBaseShape, x, y)) {
+                if (maxDepth < getLayer(adtBaseShape)) {
+                    maxDepth = getLayer(adtBaseShape);
+                    ret = adtBaseShape;
                 }
             }
         }
         return ret;
     }
 
-    private boolean isItemInRegion(ADTBaseItem adtBaseItem, int left, int right, int top, int bottom) {
-        return left < adtBaseItem.getX() &&
-               top < adtBaseItem.getY() && 
-               adtBaseItem.getX() + adtBaseItem.getWidth() < right &&
-               adtBaseItem.getY() + adtBaseItem.getHeight() < bottom;
+
+    public ADTBaseShape findItemAt(Point point) {
+        return findItemAt((int)point.getX(), (int)point.getY());
     }
 
-    public ArrayList<ADTBaseItem> findItemInRegion(int left, int right, int top, int bottom) {
-        ArrayList<ADTBaseItem> list = new ArrayList<ADTBaseItem>();
-        for (ADTBaseItem adtbaseItem : adtBaseItems) {
-            if (isItemInRegion(adtbaseItem, left, right, top, bottom)) {
-                list.add(adtbaseItem);
+    private boolean isItemInRegion(ADTBaseShape adtBaseShape, int left, int right, int top, int bottom) {
+        return left < adtBaseShape.getX() &&
+               top < adtBaseShape.getY() && 
+               adtBaseShape.getX() + adtBaseShape.getWidth() < right &&
+               adtBaseShape.getY() + adtBaseShape.getHeight() < bottom;
+    }
+
+    public ArrayList<ADTBaseShape> findItemInRegion(int left, int right, int top, int bottom) {
+        ArrayList<ADTBaseShape> list = new ArrayList<ADTBaseShape>();
+        for (ADTBaseShape adtBaseShape : adtBaseShapes) {
+            if (isItemInRegion(adtBaseShape, left, right, top, bottom)) {
+                list.add(adtBaseShape);
             }
         }
         return list;
@@ -174,11 +182,11 @@ class DrawPanel extends JLayeredPane implements MouseListener, MouseMotionListen
         super.paintComponent(g);
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, getWidth(), getHeight());
-        for (ADTBaseItem adtbaseItem : adtBaseItems) {
-            adtbaseItem.draw(g);
+        for (ADTBaseShape adtBaseShape : adtBaseShapes) {
+            adtBaseShape.draw(g);
         }
-        for (BaseLineItem baseLineItem: baseLineItems) {
-            baseLineItem.draw(g);
+        for (BaseLine baseLine: baseLines) {
+            baseLine.draw(g);
         }
     }
 

@@ -10,6 +10,14 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import UMLUtils.Canvas.ActionListener.DrawSelect;
+import UMLUtils.Canvas.ActionListener.MouseActionHandler;
+import UMLUtils.Canvas.ActionListener.Line.DrawAssocLine;
+import UMLUtils.Canvas.ActionListener.Line.DrawComposLine;
+import UMLUtils.Canvas.ActionListener.Line.DrawGenerLine;
+import UMLUtils.Canvas.ActionListener.Shape.DrawClass;
+import UMLUtils.Canvas.ActionListener.Shape.DrawUcase;
+
 class ToolsButton extends JButton implements ActionListener {
     private ToolsPanel.Modes mode;
     private ToolsPanel toolsPanel;
@@ -32,14 +40,14 @@ class ToolsButton extends JButton implements ActionListener {
  * bind image path with button 
  * bind button changeMode to some MouseActionHandler
  */
-class ToolsPanel extends JPanel {
+public class ToolsPanel extends JPanel {
     public enum Modes{
-        SELECT("src/images/newSelect.png", "src/images/newSelectCHS.png", new DrawSelectAction(), 0),
-        ASSOC("src/images/newAssoc.png", "src/images/newAssocCHS.png", new DrawAssocLineAction(), 1),
-        GENER("src/images/newGener.png", "src/images/newGenerCHS.png", new DrawGenerLineAction(), 2),
-        COMPOS("src/images/newCompos.png", "src/images/newComposCHS.png", new DrawComposLineAction(), 3),
-        CLASS("src/images/newClass.png", "src/images/newClassCHS.png", new DrawClassAction(), 4),
-        UCASE("src/images/newUcase.png", "src/images/newUcaseCHS.png", new DrawUcaseAction(), 5);
+        SELECT("src/images/newSelect.png", "src/images/newSelectCHS.png", new DrawSelect(), 0),
+        ASSOC("src/images/newAssoc.png", "src/images/newAssocCHS.png", new DrawAssocLine(), 1),
+        GENER("src/images/newGener.png", "src/images/newGenerCHS.png", new DrawGenerLine(), 2),
+        COMPOS("src/images/newCompos.png", "src/images/newComposCHS.png", new DrawComposLine(), 3),
+        CLASS("src/images/newClass.png", "src/images/newClassCHS.png", new DrawClass(), 4),
+        UCASE("src/images/newUcase.png", "src/images/newUcaseCHS.png", new DrawUcase(), 5);
 
         Modes(String path, String chsPath, MouseActionHandler handler, int index) {
             this.path = path;

@@ -10,7 +10,7 @@ import javax.swing.JMenuBar;
  */
 class AppUI extends JFrame {
     private DrawPanel drawPanel = new DrawPanel();
-    private JMenuBar menuBar = new Menu(drawPanel);
+    private JMenuBar menuBar = new MenuPanel(drawPanel);
     private ToolsPanel toolsPanel = new ToolsPanel(drawPanel);
 
     public AppUI () {
@@ -26,6 +26,7 @@ class AppUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
+
     public static void main( String[] args )
     {
         new AppUI();

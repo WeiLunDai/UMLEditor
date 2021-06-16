@@ -15,33 +15,48 @@ import javax.swing.JTextField;
  * pass drawPanel to menuItem
  * the actionPerform will directly take effect on draw panel
  */
-class GroupActionItem extends JMenuItem implements ActionListener {
-    private DrawPanel drawPanel;
+abstract class MenuActionItem extends JMenuItem implements ActionListener {
+    protected DrawPanel drawPanel;
 
-    GroupActionItem(DrawPanel drawPanel) {
-        super("group");
+    MenuActionItem(DrawPanel drawPanel, String name) {
+        super(name);
         this.drawPanel = drawPanel;
         addActionListener(this);
+    }
+}
+
+
+class GroupActionItem extends MenuActionItem {
+    GroupActionItem(DrawPanel drawPanel) {
+        super(drawPanel, "group");
     }
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        drawPanel.group(new CompositeItem());
+        drawPanel.group();
     }
 }
 
-class UngroupActionItem extends JMenuItem implements ActionListener {
-    private DrawPanel drawPanel;
+class UngroupActionItem extends MenuActionItem {
 
     UngroupActionItem(DrawPanel drawPanel) {
-        super("ungroup");
-        this.drawPanel = drawPanel;
-        addActionListener(this);
+        super(drawPanel, "ungroup");
     }
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
         drawPanel.ungroup();
+    }
+}
+
+class ChangeObjNameItem extends MenuActionItem {
+    ChangeObjNameItem(DrawPanel drawPanel) {
+        super(drawPanel, "change name");
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent arg0) {
+        new AskFrame(drawPanel);
     }
 }
 
@@ -80,29 +95,14 @@ class AskFrame extends JFrame implements ActionListener {
     }
 }
 
-class ChangeObjNameItem extends JMenuItem implements ActionListener {
-    private DrawPanel drawPanel;
-
-    ChangeObjNameItem(DrawPanel drawPanel) {
-        super("change name");
-        this.drawPanel = drawPanel;
-        addActionListener(this);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent arg0) {
-        new AskFrame(drawPanel);
-    }
-}
-
 /**
  * construct menu bar structure
  */
-class Menu extends JMenuBar {
+public class MenuPanel extends JMenuBar {
     private JMenu file = new JMenu("File");
     private JMenu edit = new JMenu("Edit");
 
-    Menu(DrawPanel drawPanel) {
+    MenuPanel(DrawPanel drawPanel) {
         edit.add(new GroupActionItem(drawPanel));
         edit.add(new UngroupActionItem(drawPanel));
         edit.add(new ChangeObjNameItem(drawPanel));
